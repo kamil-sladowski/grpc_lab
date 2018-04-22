@@ -1,0 +1,9 @@
+.gradle
+.idea
+build
+out
+target
+examples.iml
+src/main/java/resources/log.txt
+src/test/test1.iml
+src/main/main.iml

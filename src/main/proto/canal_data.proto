@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "io.grpc.examples.imageviewer";
+option java_outer_classname = "SendingImagesProto";
+option objc_class_prefix = "HLW";
+
+package imageviewer;
+
+service SendingImageData {
+    rpc sendImageData (ImageDataMessage) returns (ServerConfirmation) {}
+}
+
+service SendingMouseData {
+    rpc sendMouseData (MouseMessage) returns (ServerConfirmation) {}
+}
+
+message ImageDataMessage {
+    bool negative = 1;
+    bool neutral = 2;
+    bool positive = 3;
+    bool black_screen = 4;
+    bytes image_name = 5;
+}
+
+message MouseMessage {
+    bytes pos_x = 1;
+    bytes pos_y = 2;
+    bytes delta = 3;
+    bytes active = 4;
+}
+
+message ServerConfirmation {
+    bytes confirm = 1;
+}
