@@ -28,7 +28,7 @@ import static java.lang.Thread.sleep;
 
 
 public class DisplayImagePoll extends Application {
-    private final String IMAGES_PATH = "D:\\Studia\\GAPED_2\\GAPED\\GAPED\\";
+    private String IMAGES_PATH;
 
     private final Map<String, Integer> IMAGE_CATEGORY = Map.of(
             "A",100,"H",100,"N",100,"P",
@@ -44,10 +44,11 @@ public class DisplayImagePoll extends Application {
     private String BLACK_SCREEN_NAME = "Black";
 
 
-    private void loadDisplayDurations(){
+    private void loadConfigurationData(){
         Properties props = new Properties();
         try {
             props.load(new FileInputStream(new File("src\\main\\java\\resources\\input.cfg")));
+            IMAGES_PATH = props.getProperty("IMAGES_PATH", "");
             int first_img_display_dur = Integer.valueOf(props.getProperty("FIRST_IMG_DISPLAY_DUR", "1"));
             int first_black_background = first_img_display_dur + Integer.valueOf(props.getProperty("FIRST_BLACK_BACKGROUND", "1"));
             int second_img_display_dur = first_black_background + Integer.valueOf(props.getProperty("SECOND_IMG_DISPLAY_DUR", "1"));
@@ -67,18 +68,19 @@ public class DisplayImagePoll extends Application {
 
 
     private String[] getImagesPaths(){
-        String[] images_locks = new String[img_num];
+        String[] images_locations = new String[img_num];
         int i =0;
         for(Map.Entry<String, Integer> entry : IMAGE_CATEGORY.entrySet()){
             int max_nr = entry.getValue();
             String key = entry.getKey();
             for(int j =1; j<= max_nr; j++) {
                 String randomNum = String.format("%03d", j);
-                images_locks[i] = IMAGES_PATH + key + "\\" + key + randomNum + ".bmp";
+                images_locations[i] = IMAGES_PATH + key + "\\" + key + randomNum + ".bmp";
+                System.out.println(images_locations[i]);
                 i++;
             }
         }
-        return images_locks;
+        return images_locations;
     }
 
 
@@ -92,8 +94,10 @@ public class DisplayImagePoll extends Application {
         try {
             Path destFile = Paths.get("src\\main\\java\\resources\\log.txt");
 
-            Files.write(destFile, Collections.singleton(img_name), Charset.forName("UTF-8"), StandardOpenOption.APPEND);
-            Files.write(destFile, Collections.singleton(date), Charset.forName("UTF-8"), StandardOpenOption.APPEND);
+            Files.write(destFile, Collections.singleton(img_name), Charset.forName("UTF-8"),
+                    StandardOpenOption.APPEND);
+            Files.write(destFile, Collections.singleton(date), Charset.forName("UTF-8"),
+                    StandardOpenOption.APPEND);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -106,10 +110,10 @@ public class DisplayImagePoll extends Application {
     private void switchImage(Iterator<String> imageIterator, ImagePollClient client){
         try {
             String img_name = imageIterator.next();
-            System.out.printf(img_name);
+            System.out.println(img_name);
             img_pattern.set(new ImagePattern(new Image(new File(img_name).toURI().toString())));
             sc.setFill(img_pattern.get());
-            //writeToFile(img_name, getDate());
+            writeToFile(img_name, getDate());
             sendImageDataViaProtobuffers( client, img_name, getDate());
         } catch (IllegalArgumentException | NullPointerException e) {
             e.printStackTrace();
@@ -124,13 +128,13 @@ public class DisplayImagePoll extends Application {
 
     @Override
     public void start(Stage stage) {
-        String[] ff = getImagesPaths();
-        images = new ArrayList<>(Arrays.asList(ff));
+        loadConfigurationData();
+        String[] imagesPaths = getImagesPaths();
+        images = new ArrayList<>(Arrays.asList(imagesPaths));
         img_pattern = new AtomicReference<>(new ImagePattern(new Image(new File(images.get(0)).toURI().toString())));
         BorderPane pane = new BorderPane();
         sc = new Scene(pane);
 
-        loadDisplayDurations();
         ImagePollClient grpcClient = runGRPCClient();
         sc.setFill(Color.BLACK);
         imageIterator = images.iterator();
